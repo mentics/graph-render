@@ -52,19 +52,24 @@ fn main() -> Result<()> {
         );
     }
 
-    let (nov, summary) = convert::to_nov_graph(&graphs, cli.max_nodes);
-    eprintln!("{summary}");
+    let (views, summaries) = convert::to_views(&graphs, cli.max_nodes);
+    for summary in &summaries {
+        eprintln!("{}: {}", summary.name, summary.text);
+    }
 
     let started = std::time::Instant::now();
     if cli.no_window {
-        let laid_out = layout(&nov, Projection::Flow)?;
-        eprintln!(
-            "layout ok: {} nodes, {} edges in {:.2?}",
-            laid_out.nodes.len(),
-            laid_out.edges.len(),
-            started.elapsed()
-        );
+        for (view, summary) in views.iter().zip(&summaries) {
+            let laid_out = layout(&view.graph, Projection::Flow)?;
+            eprintln!(
+                "{} layout ok: {} nodes, {} edges in {:.2?}",
+                summary.name,
+                laid_out.nodes.len(),
+                laid_out.edges.len(),
+                started.elapsed()
+            );
+        }
         return Ok(());
     }
-    nov_viz::show(nov, &format!("graph-render — {}", cli.path.display()))
+    nov_viz::show_views(views, &format!("graph-render — {}", cli.path.display()))
 }
